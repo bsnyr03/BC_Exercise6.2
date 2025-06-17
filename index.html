@@ -1,14 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ERC20 Balance Checker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ERC20 Balance Viewer</title>
+  <meta name="author" content="bsnyr03">
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body { background:#f7f9fc; color:#24292e; text-align:center; font-family:Arial,sans-serif; padding:2rem; }
+    h1 { margin-bottom:1.5rem; }
+    button { background:#0366d6; color:white; border:none; padding:0.75rem 1.5rem; font-size:1rem; border-radius:4px; cursor:pointer; }
+    button:hover { background:#0356b6; }
+    #balance { margin-top:1.5rem; font-size:1.2rem; font-weight:bold; }
+    footer { margin-top:2rem; font-size:0.8rem; color:#666; }
+  </style>
 </head>
 <body>
   <h1>ERC20 Balance Checker</h1>
+
+  <label for="btnCheck">Check your balance</label><br>
   <button id="btnCheck">Get ERC20 Balance</button>
   <p id="balance"></p>
+
+  <script>
+    const tokenAddress = "0xEFB80Aa7f7a7620CDfDc752743e3D37Fc0652b82";
+
+    const tokenAbi = [
+      "function balanceOf(address) view returns (uint256)",
+      "function decimals() view returns (uint8)"
+    ];
+
+    const btn = document.getElementById('btnCheck');
+    const output = document.getElementById('balance');
+
+    btn.addEventListener('click', async () => {
+      if (!window.ethereum) {
+        alert('MetaMask not detected.');
+        return;
+      }
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+
+        const tokenContract = new ethers.Contract(tokenAddress, tokenAbi, provider);
+        const [rawBalance, decimals] = await Promise.all([
+          tokenContract.balanceOf(address),
+          tokenContract.decimals()
+        ]);
+
+        const formatted = ethers.utils.formatUnits(rawBalance, decimals);
+        output.textContent = `Balance of ${address}: ${formatted} Tokens`;
+      } catch (err) {
+        console.error(err);
+        output.textContent = 'Error fetching balance.';
+      }
+    });
+  </script>
+
+  <footer>Author: bsnyr03</footer>
 </body>
 </html>
